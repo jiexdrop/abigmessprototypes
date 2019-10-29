@@ -89,6 +89,7 @@ public class PlayerSideViewController : MonoBehaviour
                 saveCubeTransformParent = hit.collider.gameObject.transform.parent;
                 hit.collider.gameObject.transform.parent = cubePostion;
                 holdCube = hit.collider.gameObject;
+                holdCube.GetComponent<Rigidbody>().isKinematic = true;
             }
 
         }
@@ -102,7 +103,9 @@ public class PlayerSideViewController : MonoBehaviour
         if (holdCube != null && Input.GetMouseButtonUp(0))
         {
             holdCube.transform.parent = saveCubeTransformParent;
+            holdCube.GetComponent<Rigidbody>().isKinematic = false;
             holdCube = null;
+            
         }
     }
 
