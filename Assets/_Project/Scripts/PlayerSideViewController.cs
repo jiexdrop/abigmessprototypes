@@ -13,11 +13,19 @@ public class PlayerSideViewController : MonoBehaviour
     public Transform saveCubeTransformParent;
 
     public Animator animator;
+    public Rigidbody rigidbody;
+
+    public class RaycastSettings
+    {
+        float ViewRange = 10;
+        float hHalfFov = 45; // Horizontal half-field of view
+        float vHalfFov = 45; // Vertical half-Field of view
+    }
 
     // Start is called before the first frame update
     void Start()
     {
-
+        rigidbody = GetComponent<Rigidbody>();
     }
 
     enum Direction
@@ -34,16 +42,8 @@ public class PlayerSideViewController : MonoBehaviour
         float translation = Input.GetAxis("Vertical") * speed * Time.deltaTime;
         float rotation = Input.GetAxis("Horizontal") * speed * Time.deltaTime;
 
-        if (translation != 0)
-        {
-            // Move translation along the object's z-axis
-            transform.position = new Vector3(transform.position.x, transform.position.y, transform.position.z + translation);
-        }
-        if (rotation != 0)
-        {
-            // Rotate around our y-axis
-            transform.position = new Vector3(rotation + transform.position.x, transform.position.y, transform.position.z);
-        }
+        rigidbody.MovePosition(new Vector3(rotation + transform.position.x, transform.position.y, transform.position.z + translation));
+
 
         if (translation > 0)
         {
@@ -63,6 +63,10 @@ public class PlayerSideViewController : MonoBehaviour
         }
 
         Debug.DrawRay(transform.position, transform.forward, Color.black);
+        Debug.DrawRay(transform.position, Quaternion.AngleAxis(15.0f, new Vector3(1, 0, 1)) * transform.forward, Color.black);
+        Debug.DrawRay(transform.position, Quaternion.AngleAxis(-15.0f, new Vector3(1, 0, 1)) * transform.forward, Color.black);
+
+
 
         if (Input.GetButtonDown("Jump"))
         {
@@ -84,14 +88,19 @@ public class PlayerSideViewController : MonoBehaviour
             int layerMask = 1 << 8;
             layerMask = ~layerMask;
 
-            if (Physics.Raycast(transform.position, transform.forward, out hit, 2f, layerMask))
+            for (int i = -30; i < 30; i += 15) // Field of view of raycast
             {
-                saveCubeTransformParent = hit.collider.gameObject.transform.parent;
-                hit.collider.gameObject.transform.parent = cubePostion;
-                holdCube = hit.collider.gameObject;
-                holdCube.GetComponent<Rigidbody>().isKinematic = true;
+                if (Physics.Raycast(transform.position, Quaternion.Euler(i, 0, i) * transform.forward, out hit, 5f, layerMask))
+                {
+                    saveCubeTransformParent = hit.collider.gameObject.transform.parent;
+                    hit.collider.gameObject.transform.parent = cubePostion;
+                    holdCube = hit.collider.gameObject;
+                    holdCube.GetComponent<Rigidbody>().isKinematic = true;
+                    holdCube.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
+                    Debug.Log("Found cube !");
+                    break;
+                }
             }
-
         }
 
         if (holdCube != null)
