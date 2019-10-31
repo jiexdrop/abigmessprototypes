@@ -8,18 +8,25 @@ public class PlayerSideViewController : MonoBehaviour
     float speed = 10f;
     float rotationSpeed = 10f;
 
-    public Transform cubePostion;
-    public GameObject holdCube;
-    public Transform saveCubeTransformParent;
+    public Transform cubePosition;
+    private GameObject holdCube;
+    private Transform saveCubeTransformParent;
 
     public Animator animator;
-    public Rigidbody rigidbody;
+    private Rigidbody rigidbody;
 
+    public RaycastSettings raycastSettings = new RaycastSettings();
+
+    public BoxCollider holdCubeBoxCollider;
+    public BoxCollider saveBoxCollider;
+
+    [System.Serializable]
     public class RaycastSettings
     {
-        float ViewRange = 10;
-        float hHalfFov = 45; // Horizontal half-field of view
-        float vHalfFov = 45; // Vertical half-Field of view
+        public float ViewRange = 10;
+        public float maxDistance = 2;
+        public float hHalfFov = 45; // Horizontal half-field of view
+        public float vHalfFov = 45; // Vertical half-field of view
     }
 
     // Start is called before the first frame update
@@ -47,8 +54,9 @@ public class PlayerSideViewController : MonoBehaviour
 
         if (translation > 0)
         {
-            transform.rotation = Quaternion.Euler(0, 0,0);
-        } else if (translation < 0)
+            transform.rotation = Quaternion.Euler(0, 0, 0);
+        }
+        else if (translation < 0)
         {
             transform.rotation = Quaternion.Euler(0, 180, 0);
         }
@@ -62,61 +70,105 @@ public class PlayerSideViewController : MonoBehaviour
             transform.rotation = Quaternion.Euler(0, 270, 0);
         }
 
-        Debug.DrawRay(transform.position, transform.forward, Color.black);
-        Debug.DrawRay(transform.position, Quaternion.AngleAxis(15.0f, new Vector3(1, 0, 1)) * transform.forward, Color.black);
-        Debug.DrawRay(transform.position, Quaternion.AngleAxis(-15.0f, new Vector3(1, 0, 1)) * transform.forward, Color.black);
-
-
 
         if (Input.GetButtonDown("Jump"))
         {
             animator.SetTrigger("isJumping");
         }
 
-        if(translation != 0 || rotation != 0)
+        if (translation != 0 || rotation != 0)
         {
             animator.SetBool("isRunning", true);
-        } else
+        }
+        else
         {
             animator.SetBool("isRunning", false);
         }
 
-        if (Input.GetMouseButtonDown(0))
-        {
-            RaycastHit hit;
 
-            int layerMask = 1 << 8;
-            layerMask = ~layerMask;
-
-            for (int i = -30; i < 30; i += 15) // Field of view of raycast
-            {
-                if (Physics.Raycast(transform.position, Quaternion.Euler(i, 0, i) * transform.forward, out hit, 5f, layerMask))
-                {
-                    saveCubeTransformParent = hit.collider.gameObject.transform.parent;
-                    hit.collider.gameObject.transform.parent = cubePostion;
-                    holdCube = hit.collider.gameObject;
-                    holdCube.GetComponent<Rigidbody>().isKinematic = true;
-                    holdCube.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
-                    Debug.Log("Found cube !");
-                    break;
-                }
-            }
-        }
+        FindNearestObjectToPickUp();
+        
 
         if (holdCube != null)
         {
-            holdCube.transform.position = Vector3.Lerp(holdCube.transform.position, cubePostion.position, Time.deltaTime * speed);
-            holdCube.transform.rotation = Quaternion.Slerp(holdCube.transform.rotation, cubePostion.rotation, Time.deltaTime * speed);
+            holdCube.transform.position = Vector3.Lerp(holdCube.transform.position, cubePosition.position, Time.deltaTime * speed);
+            holdCube.transform.rotation = Quaternion.Slerp(holdCube.transform.rotation, cubePosition.rotation, Time.deltaTime * speed);
         }
 
         if (holdCube != null && Input.GetMouseButtonUp(0))
         {
-            holdCube.transform.parent = saveCubeTransformParent;
-            holdCube.GetComponent<Rigidbody>().isKinematic = false;
-            holdCube = null;
-            
+            DropHoldCube();
         }
     }
 
+    public void DropHoldCube()
+    {
+        RemoveHoldCubeCollider();
+        holdCube.transform.parent = saveCubeTransformParent;
+        holdCube.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
+        holdCube = null;
+        
+    }
 
+    void FindNearestObjectToPickUp()
+    {
+        Collider[] hits = Physics.OverlapSphere(transform.position, raycastSettings.ViewRange);
+
+        int layerMask = 8;
+
+        float minDistance = float.MaxValue;
+        Collider minHit = null;
+
+        foreach (Collider hit in hits) // Field of view of raycast
+        {
+            if (hit.gameObject == gameObject) continue;
+
+            Vector3 direction = (transform.position - hit.transform.position);
+            Vector3 hDirn = Vector3.ProjectOnPlane(direction, transform.up).normalized;
+            Vector3 vDirn = Vector3.ProjectOnPlane(direction, transform.forward).normalized; // forward ?
+
+            float hOffset = Vector3.Dot(hDirn, transform.forward) * Mathf.Rad2Deg;
+            float vOffset = Vector3.Dot(vDirn, transform.forward) * Mathf.Rad2Deg;
+
+            if (hOffset > raycastSettings.hHalfFov || vOffset > raycastSettings.vHalfFov)
+            {
+                continue;
+            }
+
+            float distance = Vector3.Distance(transform.position, hit.transform.position);
+
+            if (distance < minDistance && distance < raycastSettings.maxDistance && hit.transform.gameObject.layer != layerMask)
+            {
+                minDistance = distance;
+                minHit = hit;
+            }
+        }
+
+        if (minHit != null)
+        {
+            Debug.DrawLine(transform.position, minHit.transform.position, Color.red);
+        }
+
+        if(minHit != null && Input.GetButtonDown("Fire1"))
+        {
+            saveCubeTransformParent = minHit.gameObject.transform.parent;
+            holdCube = minHit.gameObject;
+            minHit.transform.parent = cubePosition.transform;
+            
+            holdCube.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeAll;
+            AddHoldCubeCollider();
+        }
+    }
+
+    // Adds a cube collider to the player in order for the cube not to go through walls
+    void AddHoldCubeCollider()
+    {
+        holdCubeBoxCollider = gameObject.AddComponent<BoxCollider>();
+        GetComponent<BoxCollider>().center = cubePosition.localPosition;
+    }
+
+    void RemoveHoldCubeCollider()
+    {
+        Destroy(holdCubeBoxCollider);
+    }
 }
