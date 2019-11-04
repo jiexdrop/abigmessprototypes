@@ -164,11 +164,14 @@ public class PlayerSideViewController : MonoBehaviour
     void AddHoldCubeCollider()
     {
         holdCubeBoxCollider = gameObject.AddComponent<BoxCollider>();
-        GetComponent<BoxCollider>().center = cubePosition.localPosition;
+        Debug.Log("Local Position: " + cubePosition.localPosition);
+        holdCubeBoxCollider.center = cubePosition.localPosition;
+        Destroy(holdCube.GetComponent<BoxCollider>());
     }
 
     void RemoveHoldCubeCollider()
     {
         Destroy(holdCubeBoxCollider);
+        holdCube.AddComponent<BoxCollider>();
     }
 }

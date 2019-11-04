@@ -1714,13 +1714,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78b2c1aa59ce37a44a132c000400849b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cubePostion: {fileID: 1539777154}
+  cubePosition: {fileID: 1539777154}
   animator: {fileID: 545208862}
   raycastSettings:
     ViewRange: 10
     maxDistance: 2
     hHalfFov: 45
     vHalfFov: 45
+  holdCubeBoxCollider: {fileID: 0}
 --- !u!33 &1763573632
 MeshFilter:
   m_ObjectHideFlags: 0
