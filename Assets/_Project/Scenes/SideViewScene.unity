@@ -1114,14 +1114,10 @@ MonoBehaviour:
     smoothFollow: 1
     smooth: 0.05
     newDistance: -10
-  orbitSettings:
-    xRotation: -65
-    yRotation: -180
-    allowOrbit: 1
-    yOrbitSmooth: 0.5
   inputSettings:
     MOUSE_ORBIT: MouseOrbit
     ZOOM: Mouse ScrollWheel
+  cameraSettings: {fileID: 11400000, guid: e7d9b8babb23abb4b9852eb3a225541b, type: 2}
   target: {fileID: 1763573633}
 --- !u!1 &1163638757
 GameObject:
@@ -1722,6 +1718,7 @@ MonoBehaviour:
     hHalfFov: 45
     vHalfFov: 45
   holdCubeBoxCollider: {fileID: 0}
+  saveBoxCollider: {fileID: 0}
 --- !u!33 &1763573632
 MeshFilter:
   m_ObjectHideFlags: 0

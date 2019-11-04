@@ -4,47 +4,8 @@ using UnityEngine;
 
 public class SideViewCamera : MonoBehaviour
 {
-    [System.Serializable]
-    public class PositionSettings
-    {
-        // distance from our target
-        // how far in the sky the camera needs to be ?
-        // bools for zooming ad smoothfollowing
-        // min and max zoom settings
-        public float distanceFromTarget = -10;
-        public bool allowZoom = true;
-        public float zoomSmooth = 100;
-        public float zoomStep = 5;
-        public float maxZoom = -5;
-        public float minZoom = -15;
-        public bool smoothFollow = true;
-        public float smooth = 0.05f;
 
-        [HideInInspector]
-        public float newDistance = -10;
-    }
-
-    [System.Serializable]
-    public class OrbitSettings
-    {
-        // holding our current x and y rotation for our camera
-        // bool for allowing orbit
-        public float xRotation = -65;
-        public float yRotation = -180;
-        public bool allowOrbit = true;
-        public float yOrbitSmooth = 0.5f;
-    }
-
-    [System.Serializable]
-    public class InputSettings
-    {
-        public string MOUSE_ORBIT = "MouseOrbit";
-        public string ZOOM = "Mouse ScrollWheel";
-    }
-
-    public PositionSettings positionSettings = new PositionSettings();
-    public OrbitSettings orbitSettings = new OrbitSettings();
-    public InputSettings inputSettings = new InputSettings();
+    public CameraSettings cameraSettings;
 
     Vector3 destination = Vector3.zero;
     Vector3 camVelocity = Vector3.zero;
@@ -80,8 +41,8 @@ public class SideViewCamera : MonoBehaviour
     void GetInput()
     {
         // filling the values for our input variables
-        mouseOrbitInput = Input.GetAxisRaw(inputSettings.MOUSE_ORBIT);
-        zoomInput = Input.GetAxisRaw(inputSettings.ZOOM);
+        mouseOrbitInput = Input.GetAxisRaw(cameraSettings.MOUSE_ORBIT);
+        zoomInput = Input.GetAxisRaw(cameraSettings.ZOOM);
     }
 
     void Update()
@@ -89,7 +50,7 @@ public class SideViewCamera : MonoBehaviour
         // getting input
         // zooming
         GetInput();
-        if (positionSettings.allowZoom)
+        if (cameraSettings.allowZoom)
         {
             ZoomInOnTarget();
         }
@@ -112,11 +73,11 @@ public class SideViewCamera : MonoBehaviour
     {
         // hadling getting our camera to its destination position
         destination = target.position;
-        destination += Quaternion.Euler(orbitSettings.xRotation, orbitSettings.yRotation, 0) * -Vector3.forward * positionSettings.distanceFromTarget;
+        destination += Quaternion.Euler(cameraSettings.xRotation, cameraSettings.yRotation, 0) * -Vector3.forward * cameraSettings.distanceFromTarget;
 
-        if (positionSettings.smoothFollow)
+        if (cameraSettings.smoothFollow)
         {
-            transform.position = Vector3.SmoothDamp(transform.position, destination, ref camVelocity, positionSettings.smooth);
+            transform.position = Vector3.SmoothDamp(transform.position, destination, ref camVelocity, cameraSettings.smooth);
         } else
         {
             transform.position = destination;
@@ -139,25 +100,25 @@ public class SideViewCamera : MonoBehaviour
 
         if(mouseOrbitInput > 0)
         {
-            orbitSettings.yRotation += (currentMousePosition.x - previousMousePosition.x) * orbitSettings.yOrbitSmooth;
+            cameraSettings.yRotation += (currentMousePosition.x - previousMousePosition.x) * cameraSettings.yOrbitSmooth;
         }
     }
 
     void ZoomInOnTarget()
     {
         // modifying the distancefromtarget to be closer or further away from our target
-        positionSettings.newDistance += positionSettings.zoomStep * zoomInput;
+        cameraSettings.newDistance += cameraSettings.zoomStep * zoomInput;
 
-        positionSettings.distanceFromTarget = Mathf.Lerp(positionSettings.distanceFromTarget, positionSettings.newDistance, positionSettings.zoomSmooth * Time.deltaTime);
+        cameraSettings.distanceFromTarget = Mathf.Lerp(cameraSettings.distanceFromTarget, cameraSettings.newDistance, cameraSettings.zoomSmooth * Time.deltaTime);
 
-        if(positionSettings.distanceFromTarget > positionSettings.maxZoom)
+        if(cameraSettings.distanceFromTarget > cameraSettings.maxZoom)
         {
-            positionSettings.distanceFromTarget = positionSettings.maxZoom;
+            cameraSettings.distanceFromTarget = cameraSettings.maxZoom;
         }
 
-        if (positionSettings.distanceFromTarget < positionSettings.minZoom)
+        if (cameraSettings.distanceFromTarget < cameraSettings.minZoom)
         {
-            positionSettings.distanceFromTarget = positionSettings.minZoom;
+            cameraSettings.distanceFromTarget = cameraSettings.minZoom;
         }
     }
 }
